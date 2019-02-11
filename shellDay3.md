@@ -124,7 +124,7 @@
 
 	`chsh -s /bin/csh username`--shell完整路径作为参数;
 
-* fubger命令 
+* finger命令 
 
 	查看用户信息;
 
