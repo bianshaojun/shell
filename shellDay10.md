@@ -1,6 +1,6 @@
-## shellNote
+# shellNote
 
-# day10
+## day10
 
 * \$\$变量
 
