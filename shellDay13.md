@@ -110,7 +110,7 @@ sed编辑器区别与一般认识的编辑器,叫做流编辑器;
 			This is a test of the game script.
 			```
 
-		2.g,表明新文本将会替换所有匹配的文本;
+		* g,表明新文本将会替换所有匹配的文本;
 
 			```
 			$ cat data.txt
@@ -119,7 +119,7 @@ sed编辑器区别与一般认识的编辑器,叫做流编辑器;
 			This is a game of the game script.
 			```
 
-		3.p,表明原先行的内容要打印出来;
+		* p,表明原先行的内容要打印出来;
 
 			p标记,一般跟-n选项一起使用;
 
@@ -133,7 +133,7 @@ sed编辑器区别与一般认识的编辑器,叫做流编辑器;
 			This is a game line.
 			```
 
-		4.w file,将替换的结果写到文件中;
+		* w file,将替换的结果写到文件中;
 			
 			```
 			$ cat data.txt
