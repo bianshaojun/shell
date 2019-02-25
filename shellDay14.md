@@ -1,7 +1,7 @@
 # shellNote
 ## day14
 
-###继续sed编辑器
+### 继续sed编辑器
 
 * 移动下一行文本-next命令
 
