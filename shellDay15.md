@@ -268,5 +268,325 @@ gawk选项:
 
 			* RSTART: 由match函数所匹配的子字符串的起始位置;
 
+	* 自定义变量
 
-			
+		gawk可以自己定义表里,自定的表里可以是任意的字母,数字,下划线,但不能数字开头,并且区分大小写;
+
+		* 脚本中赋值
+
+			跟shell中赋值类似,直接使用赋值语句;
+
+			```
+			$ gawk 'BEGIN{x=4; x=x * 2 + 3; print x}'
+			11
+			$
+			```
+
+			gawk可以使用标准算数操作符,包括求余符号(%),幂运算符号(^或**);
+
+		* 在命令行上赋值
+
+			可以在gawk命令行来给程序的变量赋值;
+
+			```
+			$ cat data
+			data11 data12 data13
+			data21 data22 data23
+			data31 data32 data33
+			$ cat script
+			{print $n}
+			$ gawk -f script n=2 data
+			data12
+			data22
+			data23
+			```
+
+			命令行参数定义的变量值,在BEGIN部分不可以使用;
+
+			需要在BEGIN使用的话,需要在gawk命令加上-v选项,-v选项要放在脚本之前;
+
+			```
+			$ cat script
+			BEGIN{print n}
+			{print $n}
+			$ gawk -v n=2 -f script data
+			2
+			data11 data12 data13
+			data21 data22 data23
+			data31 data32 data33
+			$			
+			```
+
+* 数组
+
+	gawk使用的是关联数组,他的索引值可以是任意的文本字符串,类似于字典一样;
+
+	* 定义数组变量
+
+		格式: `var[index] = element`
+		
+		var是变量名,index是索引值,element是数据元素值;
+
+		```
+		$ gawk 'BEGIN{
+		> var["A"] = "apple"
+		> var["B"] = "banana"
+		> print var["A"]
+		> }'
+		apple
+		$
+		```
+
+	* 遍历数组
+
+		遍历数组,使用for语句的一种特殊形式;
+
+		```
+		for (var in array)
+		{
+			statements
+		}
+		```
+
+		```
+		$ gawk 'BEGIN{
+		> var["a"] = 1
+		> var["g"] = 2
+		> var["m"] = 3
+		> var["u"] = 4
+		> for (test in var)
+		> {
+		> print "Index:",test," - Value:",var[test]
+		> }
+		> }'
+		Index: u - Value: 4
+		Index: m - Value: 3
+		Index: a - Value: 1
+		Index: g - Value: 2
+		$
+		```	
+
+		*注意:关联数组,在遍历时,没有特定的顺序,只能保证索引值和元素数据是对应的;*
+
+	* 删除数组变量
+
+		`delete array[index]`
+
+		```
+		$ gawk 'BEGIN{
+		> var["a"] = 1
+		> var["g"] = 2
+		> for (test in var)
+		> {
+		> print "Index:",test," - Value:",var[test]
+		> }
+		> delete var["g"]
+		> print "---"
+		> for (test in var)
+		> print "Index:",test," - Value:",var[test]
+		> }'
+		Index: a - Value: 1
+		Index: g - Value: 2
+		---
+		Index: a - Value: 1
+		$
+		```
+
+* 模式
+
+	* 正则表达式
+
+		gawk在使用正则表达式时,需要出现在他要控制的程序脚本的左花括号前;
+
+		```
+		$ cat data
+		1122 3344
+		2233 4455
+		$ gawk '/11/{print $1}' data
+		1122
+		```
+
+	* 匹配操作符
+
+		匹配操作符是波浪线(~)	,可以指定匹配操作符,数据字段变量以及要匹配的正则表达式;
+
+		`$1 ~ /^data/`
+
+		$1变量代表记录中的第一个字段,这个表达式会过滤第一个字段以data开头的文本的记录;
+
+		```
+		$ gawk -F: '$1 ~ /damon/{print $1,$NF}' /etc/passwd
+		damon /bin/bash
+		$
+		```
+
+		另外可以使用!符号来排除正则表达式的匹配
+
+		`$1 !~ /expression/`
+
+		```
+		$ gawk -F: '$1 !~ /damon/{print $1,$NF}' /etc/passwd
+		root /bin/bash
+		bin /bin/sh
+		......
+		```
+
+	* 数学表达式
+
+		可以在匹配模式中使用数学表达式来过滤文本;
+
+		可以使用的数学比较表达式:
+	
+		* x == y
+		* x <= y
+		* x < y
+		* x >= y
+		* x > y
+		
+		```
+		$ gawk -F: '$4 == 0 {print $1}' /etc/passwd
+		root
+		sync
+		shutdown
+		......
+		```
+
+* 结构化命令
+
+	* if语句
+
+		格式:
+	
+		```
+		if (condition)
+			statement1
+
+		if (condition)  
+		{
+			statements
+		}
+		else
+		{
+			statements
+		}
+		```
+
+	* while语句
+
+		格式:
+
+		```
+		while (condition)
+		{
+			statements 
+		}
+		```
+
+		gawk同样支持break和continue语句;
+
+	* do-while语句
+
+		格式:
+
+		```
+		do
+		{
+			statements
+		} while (condition)
+		```
+
+	* for语句
+
+		格式:
+
+		```
+		for( variable assignment; condition ; iteration process) 
+		{
+			statements
+		}
+		```
+* 格式化打印-printf
+
+	printf命令格式:
+
+	`printf "format string", var1, var2 ...`
+
+	跟c语言编程用法一样;
+
+* 数学函数
+
+| 函数 | 描述 |
+| ---- | ---- |
+| atan2(x,y) | x/y的反正切,x和y以弧度为单位 |
+| cos(x) | x的余弦,x为弧度单位 |
+| exp(x) | x的指数函数 |
+| int(x) | x的整数部分,取靠近零一侧的值 |
+| log(x) | x的自然对数 |
+| rand() | 0-1之间的随机浮点值 |
+| sin(x) | x的正弦,x以弧度单位 |
+| sqrt(x) | x的平方根 | 
+| srand(x) | 为计算随机数指定一个种子值 |
+
+* 位操作函数
+
+| 函数 | 描述 |
+| ---- | ---- |
+| and(v1,v2) | 执行v1和v2的按位与运算 |
+| compl(val) | 执行val的补运算 |
+| lshift(val, count) | 将值val左移count位 |
+| or(v1, v2) | 执行v1和v2的按位或运算 |
+| rshift(val,count) | 将值val右移count位 |
+| xor(v1,v2) | 执行v1和v2的按位异或运算 | 
+
+* 字符串函数
+
+| 函数 | 描述 |
+| --- | --- |
+| asort(s [,d]) | 将数组s按数据元素值排序,索引值会被连续的数字代替,<br>如果指定了d,排序后的数组会存放在数组d中 |
+| asorti(s [,d]) | 将数组按索引值排序,生成的数组会将索引值作为数据元素值,<br>用连续数组索引来表明排序顺序,同样d可以存放新数组 |
+| gensub(r, s, h [,t]) | 查找变量$0或目标字符串t（如果提供了的话）来匹配正则表达式r。<br>如果h是一个以g或G开头的字符串，就用s替换掉匹配的文本。<br>如果h是一个数字，它表示要替换掉第h处r匹配的地方 |
+| gsub(r, s [,t]) | 查找变量$0或目标字符串t（如果提供了的话）来匹配正则表达式r。如果找到了，就全部替换成字符串s |
+| index(s, t) | 返回字符串t在字符串s中的索引值，如果没找到的话返回0 |
+| length([s]) | 返回字符串s的长度；如果没有指定的话，返回$0的长度 |
+| match(s, r [,a]) | 返回字符串s中正则表达式r出现位置的索引。如果指定了数组a，它会存储s中匹配正则表达式的那部分|
+| split(s, a [,r]) | 将s用 FS 字符或正则表达式r（如果指定了的话）分开放到数组a中。返回字段的总数 |
+| sprintf(format,variables) | 用提供的format和variables返回一个类似于printf输出的字符串 |
+| sub(r, s [,t]) | 在变量$0或目标字符串t中查找正则表达式r的匹配。如果找到了，就用字符串s替换掉第一处匹配 |
+| substr(s, i [,n]) | 返回s中从索引值i开始的n个字符组成的子字符串。如果未提供n，则返回s剩下的部分 |
+| tolower(s) | 将s中的所有字符转换成小写 |
+| toupper(s) | 将s中的所有字符转换成大写 |
+
+* 时间函数
+
+| 函数 | 描述 |
+| ---- | ---- |
+| mktime(datespec) | 将一个按YYYY MM DD HH MM SS [DST]格式指定的日期转换成时间戳值 |
+| strftime(format[,timestamp]) | 将当前时间的时间戳或timestamp（如果提供了的话）转化格式化日期（采用shell函数date()的格式）|
+| systime( ) | 返回当前时间的时间戳 |
+
+```
+$ gawk 'BEGIN{
+> date = systime()
+> day = strftime("%A, %B %d, %Y", date)
+> print day
+> }'
+Friday, December 26, 2014
+$
+```
+
+* 自定义函数
+
+	格式:
+
+	```
+	function name([vars])
+	{
+		statements
+	}
+	```	
+
+	定义函数时,必须在出现的所有代码快之前(包含BEGIN代码块)
+
+	使用函数库文件,可以在gawk命令时,使用-f选项来指定函数库文件;
+
+	`gawk -f functionLIB -f script datafile`
