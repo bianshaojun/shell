@@ -296,4 +296,123 @@
 		+-------+----------+-----------+--------+
 		1 row in set (0.00 sec)
 		```
-			
+* 脚本中使用数据库
+
+	* mysql配置文件
+
+		mysql程序使用$HOME/.my.cnf文件来读取特定的启动命令和设置;
+
+		这里我们可以设置启动mysql会话的默认密码;
+
+		```
+		$ cat .my.cnf
+		password = test
+		$ chmod 400 .my.cnf
+		$
+		```
+
+		这里用chmod来设置.my.cnf文件限制为只能本人浏览;
+
+		之后,我们就可以不使用-p选项来登入mysql了:
+
+		`mysql mytest -u test`
+
+	* 向服务器发送命令
+
+		* 发送单个命令
+
+			对于mysql命令,可以使用-e选项,来指定命令的内容;
+
+			```
+			damon@ubuntu:~$ cat mtest 
+			#!/bin/bash
+
+			MYSQL=$(which mysql)
+
+			$MYSQL mytest -u test -e 'select * from employees'
+			damon@ubuntu:~$ ./mtest 
+			+-------+----------+-----------+--------+
+			| empid | lastname | firstname | salary |
+			+-------+----------+-----------+--------+
+			|     2 | Bian     | damon     |  10000 |
+			+-------+----------+-----------+--------+
+			damon@ubuntu:~$ 
+
+			```
+
+		* 发送多个命令
+
+			可以使用重定向来完成;
+
+			定义一个结束字符串,结束字符串指明了重定向数据的开始和结尾;
+
+			*注意:结尾的EOF,必须是该行唯一的内容,并且这一行必须以EOF开头,不要进行缩进或空格等等;*
+
+			```
+			damon@ubuntu:~$ cat mtest 
+			#!/bin/bash
+
+			MYSQL=$(which mysql)
+
+			$MYSQL mytest -u test <<EOF
+			show tables;
+			select * from employees where salary > 5000;
+			EOF
+			damon@ubuntu:~$ ./mtest 
+			Tables_in_mytest
+			employees
+			empid	lastname	firstname	salary
+			2	Bian	damon	10000
+			damon@ubuntu:~$ 
+
+			```
+
+	* 格式化数据
+
+		mysql标准输出,不太适合脚本提取数据;
+
+		先将mysql的输出重定向到一个变量中,然后在对其中的数据进行自定义的操作;
+
+		```
+		damon@ubuntu:~$ cat mtest 
+		#!/bin/bash
+
+		MYSQL=$(which mysql)
+
+		dbs=$($MYSQL mytest -u test -Bse 'show databases')
+		for db in $dbs
+		do
+			echo $db
+		done
+		damon@ubuntu:~$ ./mtest 
+		information_schema
+		mytest
+
+		```
+
+		* -B选项
+
+			指定mysql程序工作在批处理模式运行;
+
+		* -s选项
+
+			用于禁止输出列标题和格式化符号;
+
+		* -X选项
+
+			可以输出XML格式;
+
+			```
+			damon@ubuntu:~$ mysql mytest -u test -X -e 'select * from employees'
+			<?xml version="1.0"?>
+
+			<resultset statement="select * from employees
+			" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			  <row>
+				<field name="empid">2</field>
+				<field name="lastname">Bian</field>
+				<field name="firstname">damon</field>
+				<field name="salary">10000</field>
+			  </row>
+			</resultset>
+			```
